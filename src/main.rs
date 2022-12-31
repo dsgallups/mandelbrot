@@ -4,8 +4,8 @@ use image::{ImageBuffer, Rgba, RgbaImage};
 //use std::sync::{Mutex, Arc};
 
 //Parameters
-const WIDTH: usize = 2400*4;
-const HEIGHT: usize = 1920*4;
+const HEIGHT: usize = 2400*4;
+const WIDTH: usize = 1920*4;
 const X_START: f64 = -2.0;
 const X_END: f64 = 0.5;
 const Y_START: f64 = -1.0;
@@ -19,16 +19,16 @@ const PATH: &str = "mandelbrot-new2.png";
 //const N_THREADS: u32 = 6;
 
 
-//const DELTA_X: f64 = (X_END - X_START) / (WIDTH as f64);
-//const DELTA_Y: f64 = (Y_END - Y_START) / (HEIGHT as f64);
+//const DELTA_X: f64 = (X_END - X_START) / (HEIGHT as f64);
+//const DELTA_Y: f64 = (Y_END - Y_START) / (WIDTH as f64);
 
 fn init_plot() -> Vec<Vec<u32>> {
     let mut r: Vec<Vec<u32>> = Vec::new();
 
-    for _ in 0..WIDTH {
+    for _ in 0..HEIGHT {
         let mut h: Vec<u32> = Vec::new();
 
-        for _ in 0..HEIGHT {
+        for _ in 0..WIDTH {
             h.push(0);
         }
         
@@ -71,8 +71,8 @@ fn point_in_mandelbrot_set(x: f64, y: f64) -> u32 {
 fn insert_mandelbrot(plot: &mut Vec<Vec<u32>>) {
     //So we loop through the plot. we calculate the 
     //point at each plot based on x_start and x_end
-    let delta_x = (X_END - X_START) / (WIDTH as f64);
-    let delta_y = (Y_END - Y_START) / (HEIGHT as f64);
+    let delta_x = (X_END - X_START) / (HEIGHT as f64);
+    let delta_y = (Y_END - Y_START) / (WIDTH as f64);
 
     /*
     Started making multithreaded vers because bored
@@ -136,7 +136,7 @@ fn insert_mandelbrot(plot: &mut Vec<Vec<u32>>) {
 
 fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
 
-    let mut image = RgbaImage::new(HEIGHT as u32, WIDTH as u32);
+    let mut image = RgbaImage::new(WIDTH as u32, HEIGHT as u32);
     for x in 0..plot.len() {
         for y in 0..plot[x].len() {
 
@@ -147,9 +147,9 @@ fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
             let pixel_modified_count: i32 = pixel_iteration_count as i32 - BEGIN_SHADE_AT_N as i32;
             let max = N_ITER - BEGIN_SHADE_AT_N;
 
-            //note: WIDTH - x - 1 is to rotate image around the x axis
+            //note: HEIGHT - x - 1 is to rotate image around the x axis
             if pixel_modified_count < 0 {
-                image.put_pixel(y as u32, WIDTH as u32 - x as u32 - 1, Rgba([0, 0, 0, 0]))
+                image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, 0]))
             } else {
                 let mut pixel_value = 255 - (((pixel_modified_count as f64 / max as f64) * 255.0) as u8);
                 
@@ -159,7 +159,7 @@ fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
                 //run modulo of the pixel value, and subtract that from the pixel
                 pixel_value = pixel_value - (pixel_value % values_in_shade);
                 
-                image.put_pixel(y as u32, WIDTH as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, 255 - pixel_value]));
+                image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, 255 - pixel_value]));
             }      
        
        //create five groups of pixels. So
@@ -211,7 +211,7 @@ fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
     image
 }
 
-fn save_image(mut img: ImageBuffer<Rgba<u8>, Vec<u8>>) {
+fn save_image(img: ImageBuffer<Rgba<u8>, Vec<u8>>) {
     img.save(PATH).unwrap();
 }
 fn main() {
@@ -222,14 +222,14 @@ fn main() {
 
     println!("Plot generated");
 
-    println!("Plot Length - (WIDTH, HEIGHT) = ({}, {})", plot.len(), plot[0].len());
+    println!("Plot Length - (HEIGHT, WIDTH) = ({}, {})", plot.len(), plot[0].len());
 
     //now draw the mandelbrot set on the plot
     insert_mandelbrot(&mut plot);
     println!("Mandelbrot points inserted!");
 
     //now create an image based on the plot    
-    let mut image = create_image(&mut plot);
+    let image = create_image(&mut plot);
     println!("Image created!");
 
     save_image(image);
@@ -245,7 +245,7 @@ fn main() {
     then you basically make iterations of points. you have
     X, Y start and X,Y end that define this map
     then the specificity of each point is defined by
-    the delta of (x_end - x_start)/WIDTH and (y_end - y_start)/HEIGHT
+    the delta of (x_end - x_start)/HEIGHT and (y_end - y_start)/WIDTH
 
     */
 }
