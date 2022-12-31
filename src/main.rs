@@ -4,8 +4,8 @@ use image::{ImageBuffer, Rgba, RgbaImage};
 //use std::sync::{Mutex, Arc};
 
 //Parameters
-const WIDTH: usize = 2400;
-const HEIGHT: usize = 1920;
+const WIDTH: usize = 2400*4;
+const HEIGHT: usize = 1920*4;
 const X_START: f64 = -2.0;
 const X_END: f64 = 0.5;
 const Y_START: f64 = -1.0;
@@ -13,7 +13,7 @@ const Y_END: f64 = 1.0;
 
 const N_ITER: u32 = 400;
 const BEGIN_SHADE_AT_N: u32 = 10;
-const NUM_SHADES: u8 = 8;
+const NUM_SHADES: u8 = 3;
 const PATH: &str = "mandelbrot-new2.png";
 
 //const N_THREADS: u32 = 6;
