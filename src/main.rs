@@ -1,5 +1,7 @@
 
 use image::{ImageBuffer, Rgb, RgbImage};
+//use std::thread;
+//use std::sync::{Mutex, Arc};
 
 //Parameters
 const WIDTH: usize = 64000;
@@ -10,6 +12,11 @@ const Y_START: f64 = -1.0;
 const Y_END: f64 = 1.0;
 const N_ITER: u32 = 255;
 const PATH: &str = "mandelbrot-testing.png";
+//const N_THREADS: u32 = 6;
+
+
+//const DELTA_X: f64 = (X_END - X_START) / (WIDTH as f64);
+//const DELTA_Y: f64 = (Y_END - Y_START) / (HEIGHT as f64);
 
 fn init_plot() -> Vec<Vec<u32>> {
     let mut r: Vec<Vec<u32>> = Vec::new();
@@ -63,6 +70,47 @@ fn insert_mandelbrot(plot: &mut Vec<Vec<u32>>) {
     let delta_x = (X_END - X_START) / (WIDTH as f64);
     let delta_y = (Y_END - Y_START) / (HEIGHT as f64);
 
+    /*
+    Started making multithreaded vers because bored
+    //based on the number of threads, divide them into equal sections. We will
+    //just make n columns based on n threads
+    let column_size = plot.len() as u32 / N_THREADS;
+
+    //yes, this does mean one thread will most likely outlast all the others. sux
+    let mut handles = Vec::new();
+
+    
+    for i in 0..N_THREADS {
+        let offset = column_size * i;
+        let plot_y_len = plot[0].len();
+
+        
+        let handle = thread::spawn(move || {
+            let mut plt: Vec<Vec<u32>> = Vec::new();
+
+            for x in 0..column_size {
+                let mut row: Vec<u32> = Vec::new();
+                for y in 0..plot_y_len {
+                    let point_x = X_START + (DELTA_X * ((x + offset) as f64));
+                    let point_y = X_START + (DELTA_Y * (y as f64));
+                    row.push(point_in_mandelbrot_set(point_x, point_y));
+                }
+                plt.push(row);
+            }
+
+            return (plt, offset);
+        });
+
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        let handle_plot = handle.join().unwrap();
+
+    }
+    */
+
+
     for x in 0..plot.len() {
         for y in 0..plot[x].len() {
             
@@ -78,6 +126,7 @@ fn insert_mandelbrot(plot: &mut Vec<Vec<u32>>) {
 
         }
     }
+    
 
 }
 
@@ -86,7 +135,7 @@ fn create_image(plot: &mut Vec<Vec<u32>>, image: &mut ImageBuffer<Rgb<u8>, Vec<u
     for x in 0..plot.len() {
         for y in 0..plot[x].len() {
 
-            let mut v = plot[x][y];
+            let v = plot[x][y];
             //then we want it to be white
             let max = N_ITER;
             let pixel_value = 255 - (((v as f64 / max as f64) * 255.0) as u8);
