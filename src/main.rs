@@ -1,17 +1,21 @@
 
-use image::{ImageBuffer, Rgb, RgbImage};
+use image::{ImageBuffer, Rgba, RgbaImage};
 //use std::thread;
 //use std::sync::{Mutex, Arc};
 
 //Parameters
-const WIDTH: usize = 64000;
-const HEIGHT: usize = 64000;
+const WIDTH: usize = 2000;
+const HEIGHT: usize = 2000;
 const X_START: f64 = -2.0;
 const X_END: f64 = 0.5;
 const Y_START: f64 = -1.0;
 const Y_END: f64 = 1.0;
-const N_ITER: u32 = 255;
-const PATH: &str = "mandelbrot-testing.png";
+
+const N_ITER: u32 = 40;
+const BEGIN_SHADE_AT_N: u32 = 30;
+const NUM_SHADES: u8 = 30;
+const PATH: &str = "mandelbrot-new.png";
+
 //const N_THREADS: u32 = 6;
 
 
@@ -130,7 +134,7 @@ fn insert_mandelbrot(plot: &mut Vec<Vec<u32>>) {
 
 }
 
-fn create_image(plot: &mut Vec<Vec<u32>>, image: &mut ImageBuffer<Rgb<u8>, Vec<u8>>) {
+fn create_image(plot: &mut Vec<Vec<u32>>, image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
 
     for x in 0..plot.len() {
         for y in 0..plot[x].len() {
@@ -138,17 +142,52 @@ fn create_image(plot: &mut Vec<Vec<u32>>, image: &mut ImageBuffer<Rgb<u8>, Vec<u
             let v = plot[x][y];
             //then we want it to be white
             let max = N_ITER;
-            let pixel_value = 255 - (((v as f64 / max as f64) * 255.0) as u8);
+            let mut pixel_value = 255 - (((v as f64 / max as f64) * 255.0) as u8);
             
-            image.put_pixel(x as u32, y as u32, Rgb([pixel_value, pixel_value, pixel_value]));
+            //calculate the number of values in a shade
+            let values_in_shade = 255 / NUM_SHADES;
+            
+            //run modulo of the pixel value, and subtract that from the pixel
+            pixel_value = pixel_value - (pixel_value % values_in_shade);
+            
+            image.put_pixel(x as u32, y as u32, Rgba([pixel_value, pixel_value, pixel_value, 255 - pixel_value]));
+       
+       
+       //create five groups of pixels. So
+            //0-12 for example should have value of 0
+            //13-26 should have value of 13
+
+            /*
+                example: 40 values, 10 shades
+            
+                0-3
+                4-7
+                9-12
+                13-16
+                ...
+                36-40
+
+                take a value of 15
+
+                how do we know 3 is in shade 0
+
+                40 values / 10 = 4
+
+                4 % 4 = 0
+                4 - 0  = 4
+
+                15 % 4 = 3
+                15 - 3 = 12
+
+                40 % 4 = 0
+                40 - 0 = 40
+
+            */
         }
     }
 }
 
-fn save_image(mut img: ImageBuffer<Rgb<u8>, Vec<u8>>) {
-
-    img.put_pixel(30, 30, Rgb([255,0,0]));
-
+fn save_image(mut img: ImageBuffer<Rgba<u8>, Vec<u8>>) {
     img.save(PATH).unwrap();
 }
 fn main() {
@@ -166,7 +205,7 @@ fn main() {
     println!("Mandelbrot points inserted!");
 
     //now create an image based on the plot
-    let mut image = RgbImage::new(WIDTH as u32, HEIGHT as u32);
+    let mut image = RgbaImage::new(WIDTH as u32, HEIGHT as u32);
     println!("Image initialized!");
     
     create_image(&mut plot, &mut image);
