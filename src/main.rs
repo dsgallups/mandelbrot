@@ -4,17 +4,17 @@ use image::{ImageBuffer, Rgba, RgbaImage};
 //use std::sync::{Mutex, Arc};
 
 //Parameters
-const WIDTH: usize = 2000;
-const HEIGHT: usize = 2000;
+const WIDTH: usize = 2400;
+const HEIGHT: usize = 1920;
 const X_START: f64 = -2.0;
 const X_END: f64 = 0.5;
 const Y_START: f64 = -1.0;
 const Y_END: f64 = 1.0;
 
-const N_ITER: u32 = 40;
-const BEGIN_SHADE_AT_N: u32 = 30;
-const NUM_SHADES: u8 = 30;
-const PATH: &str = "mandelbrot-new.png";
+const N_ITER: u32 = 400;
+const BEGIN_SHADE_AT_N: u32 = 10;
+const NUM_SHADES: u8 = 8;
+const PATH: &str = "mandelbrot-new2.png";
 
 //const N_THREADS: u32 = 6;
 
@@ -134,24 +134,33 @@ fn insert_mandelbrot(plot: &mut Vec<Vec<u32>>) {
 
 }
 
-fn create_image(plot: &mut Vec<Vec<u32>>, image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
+fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
 
+    let mut image = RgbaImage::new(HEIGHT as u32, WIDTH as u32);
     for x in 0..plot.len() {
         for y in 0..plot[x].len() {
 
-            let v = plot[x][y];
+            let pixel_iteration_count = plot[x][y];
             //then we want it to be white
-            let max = N_ITER;
-            let mut pixel_value = 255 - (((v as f64 / max as f64) * 255.0) as u8);
-            
-            //calculate the number of values in a shade
-            let values_in_shade = 255 / NUM_SHADES;
-            
-            //run modulo of the pixel value, and subtract that from the pixel
-            pixel_value = pixel_value - (pixel_value % values_in_shade);
-            
-            image.put_pixel(x as u32, y as u32, Rgba([pixel_value, pixel_value, pixel_value, 255 - pixel_value]));
-       
+
+            //apply the value in which to start shading
+            let pixel_modified_count: i32 = pixel_iteration_count as i32 - BEGIN_SHADE_AT_N as i32;
+            let max = N_ITER - BEGIN_SHADE_AT_N;
+
+            //note: WIDTH - x - 1 is to rotate image around the x axis
+            if pixel_modified_count < 0 {
+                image.put_pixel(y as u32, WIDTH as u32 - x as u32 - 1, Rgba([0, 0, 0, 0]))
+            } else {
+                let mut pixel_value = 255 - (((pixel_modified_count as f64 / max as f64) * 255.0) as u8);
+                
+                //calculate the number of values in a shade
+                let values_in_shade = 255 / NUM_SHADES;
+                
+                //run modulo of the pixel value, and subtract that from the pixel
+                pixel_value = pixel_value - (pixel_value % values_in_shade);
+                
+                image.put_pixel(y as u32, WIDTH as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, 255 - pixel_value]));
+            }      
        
        //create five groups of pixels. So
             //0-12 for example should have value of 0
@@ -182,9 +191,24 @@ fn create_image(plot: &mut Vec<Vec<u32>>, image: &mut ImageBuffer<Rgba<u8>, Vec<
                 40 % 4 = 0
                 40 - 0 = 40
 
+                Now for shading...
+                if we have n iterations to be 40
+                and we want to start shading at 30
+                we will have 10 iterations to use
+
+                so the shading will be like 
+                29/40 is none
+                30/40 is 0
+                31/40 is 1
+                32/40 is 2
+
+                so really it's
+                1/10
             */
         }
     }
+
+    image
 }
 
 fn save_image(mut img: ImageBuffer<Rgba<u8>, Vec<u8>>) {
@@ -204,11 +228,8 @@ fn main() {
     insert_mandelbrot(&mut plot);
     println!("Mandelbrot points inserted!");
 
-    //now create an image based on the plot
-    let mut image = RgbaImage::new(WIDTH as u32, HEIGHT as u32);
-    println!("Image initialized!");
-    
-    create_image(&mut plot, &mut image);
+    //now create an image based on the plot    
+    let mut image = create_image(&mut plot);
     println!("Image created!");
 
     save_image(image);
