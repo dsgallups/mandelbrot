@@ -5,21 +5,21 @@ use chrono::{DateTime, Utc};
 //use std::sync::{Mutex, Arc};
 
 //Parameters
-const HEIGHT: usize = 2400*4;
 const WIDTH: usize = 1920*4;
-const X_START: f64 = -2.0;
-const X_END: f64 = 0.5;
-const Y_START: f64 = -1.0;
-const Y_END: f64 = 1.0;
-/*
-const N_ITER: u32 = 255;
-const BEGIN_SHADE_AT_N: u32 = 10;
-const NUM_SHADES: u8 = 30;
-*/
+const PLOT_ZOOM: f64 = 1.0;
+
+
+const X_START: f64 = -2.0 * PLOT_ZOOM;
+const X_END: f64 = 0.5 * PLOT_ZOOM;
+const Y_START: f64 = -1.2 * PLOT_ZOOM;
+const Y_END: f64 = 1.2 * PLOT_ZOOM;
+const HEIGHT: usize = (((X_END - X_START) / (Y_END - Y_START)) * WIDTH as f64) as usize;
+
 const N_ITER: u32 = 255;
 const BEGIN_SHADE_AT_N: u32 = 10;
 const NUM_SHADES: u8 = 5;
-const FIRST_SHADE_VAL: u8 = 20;
+const FIRST_SHADE_VAL_IFN_LIGHT: u8 = 20;   //shades grow upward (0 -> 255)
+const FIRST_SHADE_VAL_IF_LIGHT: u8 = 255;   //shades grow downward (255 -> 0)
 const PATH: &str = "mandelbrot_at_";
 const LIGHT: bool = false;
 
@@ -160,11 +160,13 @@ fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
             } else {
                 //println!("pixel_modified_count, max = {}, {}", pixel_modified_count, max);
                 
-                let mut pixel_value = FIRST_SHADE_VAL + ((pixel_modified_count as f64 / max as f64) * (255.0 - FIRST_SHADE_VAL as f64)) as u8;
+                let mut pixel_value = FIRST_SHADE_VAL_IF_LIGHT - ((pixel_modified_count as f64 / max as f64) * (FIRST_SHADE_VAL_IF_LIGHT as f64)) as u8;
                 let mut opacity = 255 - pixel_value;
+
                 if !LIGHT {
+                    pixel_value = FIRST_SHADE_VAL_IFN_LIGHT + ((pixel_modified_count as f64 / max as f64) * (255.0 - FIRST_SHADE_VAL_IFN_LIGHT as f64)) as u8;
+                    opacity = pixel_value;
                     pixel_value = 255 - pixel_value;
-                    opacity = 255 - opacity;
                 }
 
                 //println!("pixel_value: {}", pixel_value);
@@ -209,6 +211,7 @@ fn save_image(img: ImageBuffer<Rgba<u8>, Vec<u8>>) {
 }
 fn main() {
     println!("Hello, world!");
+    println!("HEIGHT = {}", HEIGHT);
 
     //initialize the plot
     let mut plot = init_plot();
