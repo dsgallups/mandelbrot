@@ -1,11 +1,12 @@
 
 use image::{ImageBuffer, Rgba, RgbaImage};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
+#[allow(dead_code)]
 enum ShadingType {
-    OPACITY_AND_COLOR,
-    OPACITY_ONLY,
-    COLOR_ONLY
+    OpacityAndColor,
+    OpacityOnly,
+    ColorOnly
 }
 
 //use std::thread;
@@ -14,8 +15,8 @@ enum ShadingType {
 //Important parameters
 const WIDTH: usize = 1920*4;
 const PLOT_ZOOM: f64 = 1.0;
-const LIGHT: bool = false;
-const SHADING_TYPE: ShadingType = ShadingType::OPACITY_AND_COLOR;
+const LIGHT: bool = true;
+const SHADING_TYPE: ShadingType = ShadingType::OpacityOnly;
 
 
 const X_START: f64 = -2.0 * PLOT_ZOOM;
@@ -160,24 +161,33 @@ fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
 
             //apply the value in which to start shading
             let pixel_modified_count: i32 = pixel_iteration_count as i32 - BEGIN_SHADE_AT_N as i32;
-            let max = N_ITER - BEGIN_SHADE_AT_N;
+        
+            let max = 1 + N_ITER - BEGIN_SHADE_AT_N;
 
             //note: HEIGHT - x - 1 is to rotate image around the x axis
             if pixel_modified_count < 0 {
                 image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, 0]))
             } else {
-                //println!("pixel_modified_count, max = {}, {}", pixel_modified_count, max);
                 
-                let mut pixel_value = FIRST_SHADE_VAL_IF_LIGHT - ((pixel_modified_count as f64 / max as f64) * (FIRST_SHADE_VAL_IF_LIGHT as f64)) as u8;
-                let mut opacity = 255 - pixel_value;
+                let mut pixel_value = ((pixel_modified_count as f64 / max as f64) * (FIRST_SHADE_VAL_IF_LIGHT as f64)) as u8;
+                /*if pixel_value == 0 {
+                    println!("------------------------------------------------");
+                    println!("pixel value:              {}", pixel_value);
+                    println!("pixel_iteration_count:    {}", pixel_iteration_count);
+                    println!("BEGIN_SHADE_AT_N:         {}", BEGIN_SHADE_AT_N);
+                    println!("pixel_modified_count:     {}", pixel_modified_count);
+                    println!("max:                      {}", max);
+                    println!("FIRST_SHADE_VAL_IF_LIGHT: {}", FIRST_SHADE_VAL_IF_LIGHT);
+
+                }*/
+                
+                
+                let opacity = pixel_value;
 
                 if !LIGHT {
                     pixel_value = FIRST_SHADE_VAL_IFN_LIGHT + ((pixel_modified_count as f64 / max as f64) * (255.0 - FIRST_SHADE_VAL_IFN_LIGHT as f64)) as u8;
-                    opacity = pixel_value;
                     pixel_value = 255 - pixel_value;
                 }
-
-                //println!("pixel_value: {}", pixel_value);
                 
                 //calculate the number of values in a shade
                 let values_in_shade = 255 / NUM_SHADES;
@@ -186,9 +196,11 @@ fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
                 pixel_value = pixel_value - (pixel_value % values_in_shade);
                 
                 match SHADING_TYPE {
-                    ShadingType::COLOR_ONLY =>  image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, 255])),
-                    ShadingType::OPACITY_ONLY => image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, opacity])),
-                    ShadingType::OPACITY_AND_COLOR => image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, opacity]))
+                    ShadingType::ColorOnly =>  image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, 255])),
+                    ShadingType::OpacityOnly => if LIGHT 
+                        {image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([255, 255, 255, opacity]))} else 
+                        {image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, opacity]))},
+                    ShadingType::OpacityAndColor => image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, opacity]))
                 }
                 //image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, opacity]));
                 //image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, opacity]));
