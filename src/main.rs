@@ -1,12 +1,21 @@
 
 use image::{ImageBuffer, Rgba, RgbaImage};
 use chrono::{DateTime, Utc};
+
+enum ShadingType {
+    OPACITY_AND_COLOR,
+    OPACITY_ONLY,
+    COLOR_ONLY
+}
+
 //use std::thread;
 //use std::sync::{Mutex, Arc};
 
-//Parameters
+//Important parameters
 const WIDTH: usize = 1920*4;
 const PLOT_ZOOM: f64 = 1.0;
+const LIGHT: bool = false;
+const SHADING_TYPE: ShadingType = ShadingType::OPACITY_AND_COLOR;
 
 
 const X_START: f64 = -2.0 * PLOT_ZOOM;
@@ -21,7 +30,6 @@ const NUM_SHADES: u8 = 5;
 const FIRST_SHADE_VAL_IFN_LIGHT: u8 = 20;   //shades grow upward (0 -> 255)
 const FIRST_SHADE_VAL_IF_LIGHT: u8 = 255;   //shades grow downward (255 -> 0)
 const PATH: &str = "mandelbrot_at_";
-const LIGHT: bool = false;
 
 //const N_THREADS: u32 = 6;
 
@@ -177,7 +185,13 @@ fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
                 //run modulo of the pixel value, and subtract that from the pixel
                 pixel_value = pixel_value - (pixel_value % values_in_shade);
                 
-                image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, opacity]));
+                match SHADING_TYPE {
+                    ShadingType::COLOR_ONLY =>  image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, 255])),
+                    ShadingType::OPACITY_ONLY => image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, opacity])),
+                    ShadingType::OPACITY_AND_COLOR => image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, opacity]))
+                }
+                //image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, opacity]));
+                //image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, opacity]));
             }      
             /*
             
