@@ -1,5 +1,6 @@
 
 use image::{ImageBuffer, Rgba, RgbaImage};
+use chrono::{DateTime, Utc};
 //use std::thread;
 //use std::sync::{Mutex, Arc};
 
@@ -10,11 +11,17 @@ const X_START: f64 = -2.0;
 const X_END: f64 = 0.5;
 const Y_START: f64 = -1.0;
 const Y_END: f64 = 1.0;
-
-const N_ITER: u32 = 400;
+/*
+const N_ITER: u32 = 255;
 const BEGIN_SHADE_AT_N: u32 = 10;
-const NUM_SHADES: u8 = 3;
-const PATH: &str = "mandelbrot-new2.png";
+const NUM_SHADES: u8 = 30;
+*/
+const N_ITER: u32 = 255;
+const BEGIN_SHADE_AT_N: u32 = 10;
+const NUM_SHADES: u8 = 5;
+const FIRST_SHADE_VAL: u8 = 20;
+const PATH: &str = "mandelbrot_at_";
+const LIGHT: bool = false;
 
 //const N_THREADS: u32 = 6;
 
@@ -151,7 +158,16 @@ fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
             if pixel_modified_count < 0 {
                 image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, 0]))
             } else {
-                let mut pixel_value = 255 - (((pixel_modified_count as f64 / max as f64) * 255.0) as u8);
+                //println!("pixel_modified_count, max = {}, {}", pixel_modified_count, max);
+                
+                let mut pixel_value = FIRST_SHADE_VAL + ((pixel_modified_count as f64 / max as f64) * (255.0 - FIRST_SHADE_VAL as f64)) as u8;
+                let mut opacity = 255 - pixel_value;
+                if !LIGHT {
+                    pixel_value = 255 - pixel_value;
+                    opacity = 255 - opacity;
+                }
+
+                //println!("pixel_value: {}", pixel_value);
                 
                 //calculate the number of values in a shade
                 let values_in_shade = 255 / NUM_SHADES;
@@ -159,52 +175,23 @@ fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
                 //run modulo of the pixel value, and subtract that from the pixel
                 pixel_value = pixel_value - (pixel_value % values_in_shade);
                 
-                image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, 255 - pixel_value]));
+                image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, opacity]));
             }      
-       
-       //create five groups of pixels. So
-            //0-12 for example should have value of 0
-            //13-26 should have value of 13
-
             /*
-                example: 40 values, 10 shades
             
-                0-3
-                4-7
-                9-12
-                13-16
-                ...
-                36-40
+                So now we need to calculate the pixel value given that there is a starting pixel value
+                let's say that the iteration count is 10
+                for a total iteration of 13
+                and the starting pixel value is 85
+                of course, the highest value of a pixel is 255
 
-                take a value of 15
+                so the equation will be
+                85 + ((255-85) * 10/13)
 
-                how do we know 3 is in shade 0
 
-                40 values / 10 = 4
-
-                4 % 4 = 0
-                4 - 0  = 4
-
-                15 % 4 = 3
-                15 - 3 = 12
-
-                40 % 4 = 0
-                40 - 0 = 40
-
-                Now for shading...
-                if we have n iterations to be 40
-                and we want to start shading at 30
-                we will have 10 iterations to use
-
-                so the shading will be like 
-                29/40 is none
-                30/40 is 0
-                31/40 is 1
-                32/40 is 2
-
-                so really it's
-                1/10
+            
             */
+       
         }
     }
 
@@ -212,7 +199,13 @@ fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
 }
 
 fn save_image(img: ImageBuffer<Rgba<u8>, Vec<u8>>) {
-    img.save(PATH).unwrap();
+    let now = Utc::now();
+    let current_time = now.format("%y-%m-%d-%H%M%S").to_string();
+    let mut new_path = String::from(PATH);
+    new_path.push_str(&current_time);
+    new_path.push_str(".png");
+    println!("Saving image to {}.", new_path);
+    img.save(&new_path).unwrap();
 }
 fn main() {
     println!("Hello, world!");
