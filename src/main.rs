@@ -1,6 +1,8 @@
-
 use image::{ImageBuffer, Rgba, RgbaImage};
 use chrono::Utc;
+//use std::thread;
+//use std::sync::{Mutex, Arc};
+
 
 #[allow(dead_code)]
 enum ShadingType {
@@ -9,32 +11,31 @@ enum ShadingType {
     ColorOnly
 }
 
-//use std::thread;
-//use std::sync::{Mutex, Arc};
-
 //Important parameters
-const WIDTH: usize = 1920*4;
-const PLOT_ZOOM: f64 = 1.0;
-const LIGHT: bool = true;
-const SHADING_TYPE: ShadingType = ShadingType::OpacityOnly;
+const WIDTH: usize = 1920;
+const LIGHT: bool = false;
+const SHADING_TYPE: ShadingType = ShadingType::ColorOnly;
 
 
-const X_START: f64 = -2.0 * PLOT_ZOOM;
-const X_END: f64 = 0.5 * PLOT_ZOOM;
-const Y_START: f64 = -1.2 * PLOT_ZOOM;
-const Y_END: f64 = 1.2 * PLOT_ZOOM;
+const PLOT_ZOOM: f64 = 0.000001;
+
+//note these are the X,Y coordinates for the graph, not the final image. The coordinates have been otherwise flipped.
+const PLOT_TRANSFORM_X: f64 = -1.065;
+const PLOT_TRANSFORM_Y: f64 = -0.27;
+const X_START: f64 = (-2.0 * PLOT_ZOOM) + PLOT_TRANSFORM_X;
+const X_END: f64 = (0.5 * PLOT_ZOOM) + PLOT_TRANSFORM_X;
+const Y_START: f64 = (-1.2 * PLOT_ZOOM) + PLOT_TRANSFORM_Y;
+const Y_END: f64 = (1.2 * PLOT_ZOOM) + PLOT_TRANSFORM_Y;
 const HEIGHT: usize = (((X_END - X_START) / (Y_END - Y_START)) * WIDTH as f64) as usize;
 
-const N_ITER: u32 = 255;
-const BEGIN_SHADE_AT_N: u32 = 10;
-const NUM_SHADES: u8 = 5;
+const N_ITER: u32 = 500;
+const BEGIN_SHADE_AT_N: u32 = 0;
+const NUM_SHADES: u8 = 255;
 const FIRST_SHADE_VAL_IFN_LIGHT: u8 = 20;   //shades grow upward (0 -> 255)
 const FIRST_SHADE_VAL_IF_LIGHT: u8 = 255;   //shades grow downward (255 -> 0)
 const PATH: &str = "mandelbrot_at_";
 
 //const N_THREADS: u32 = 6;
-
-
 //const DELTA_X: f64 = (X_END - X_START) / (HEIGHT as f64);
 //const DELTA_Y: f64 = (Y_END - Y_START) / (WIDTH as f64);
 
@@ -150,7 +151,7 @@ fn insert_mandelbrot(plot: &mut Vec<Vec<u32>>) {
 
 }
 
-fn create_image(plot: &mut Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+fn create_image(plot: &Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
 
     let mut image = RgbaImage::new(WIDTH as u32, HEIGHT as u32);
     for x in 0..plot.len() {
@@ -235,6 +236,7 @@ fn save_image(img: ImageBuffer<Rgba<u8>, Vec<u8>>) {
     println!("Saving image to {}.", new_path);
     img.save(&new_path).unwrap();
 }
+
 fn main() {
     println!("Hello, world!");
     println!("HEIGHT = {}", HEIGHT);
@@ -251,11 +253,16 @@ fn main() {
     println!("Mandelbrot points inserted!");
 
     //now create an image based on the plot    
-    let image = create_image(&mut plot);
+    let image = create_image(&plot);
     println!("Image created!");
 
     save_image(image);
     println!("Image saved!");
+    println!("---------------------------------------");
+    println!("Image Statistics: ");
+    println!("Top Left Corner:      ({:.4}, {:.4})", X_END, Y_END);
+    println!("Bottom Right Corner:  ({:.4}, {:.4})", X_START, Y_START);
+    println!("Zoom:                 ({:.4})", PLOT_ZOOM);
 
 
 

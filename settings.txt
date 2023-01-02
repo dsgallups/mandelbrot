@@ -15,3 +15,25 @@ const NUM_SHADES: u8 = 5;
 const FIRST_SHADE_VAL: u8 = 20;
 const PATH: &str = "mandelbrot_at_";
 const LIGHT: bool = true;
+
+
+default:
+//Important parameters
+const WIDTH: usize = 1920*4;
+const PLOT_ZOOM: f64 = 1.0;
+const LIGHT: bool = true;
+const SHADING_TYPE: ShadingType = ShadingType::OpacityOnly;
+
+
+const X_START: f64 = -2.0 * PLOT_ZOOM;
+const X_END: f64 = 0.5 * PLOT_ZOOM;
+const Y_START: f64 = -1.2 * PLOT_ZOOM;
+const Y_END: f64 = 1.2 * PLOT_ZOOM;
+const HEIGHT: usize = (((X_END - X_START) / (Y_END - Y_START)) * WIDTH as f64) as usize;
+
+const N_ITER: u32 = 255;
+const BEGIN_SHADE_AT_N: u32 = 10;
+const NUM_SHADES: u8 = 5;
+const FIRST_SHADE_VAL_IFN_LIGHT: u8 = 20;   //shades grow upward (0 -> 255)
+const FIRST_SHADE_VAL_IF_LIGHT: u8 = 255;   //shades grow downward (255 -> 0)
+const PATH: &str = "mandelbrot_at_";
