@@ -12,25 +12,25 @@ enum ShadingType {
 }
 
 //Important parameters
-const WIDTH: usize = 1920;
-const LIGHT: bool = false;
-const SHADING_TYPE: ShadingType = ShadingType::ColorOnly;
+const WIDTH: usize = 1920*4;
+const LIGHT: bool = true;
+const SHADING_TYPE: ShadingType = ShadingType::OpacityOnly;
 
 
-const PLOT_ZOOM: f64 = 0.000001;
+const PLOT_ZOOM: f64 = 1.0;
 
 //note these are the X,Y coordinates for the graph, not the final image. The coordinates have been otherwise flipped.
-const PLOT_TRANSFORM_X: f64 = -1.065;
-const PLOT_TRANSFORM_Y: f64 = -0.27;
+const PLOT_TRANSFORM_X: f64 = 0.0;
+const PLOT_TRANSFORM_Y: f64 = 0.0;
 const X_START: f64 = (-2.0 * PLOT_ZOOM) + PLOT_TRANSFORM_X;
 const X_END: f64 = (0.5 * PLOT_ZOOM) + PLOT_TRANSFORM_X;
 const Y_START: f64 = (-1.2 * PLOT_ZOOM) + PLOT_TRANSFORM_Y;
 const Y_END: f64 = (1.2 * PLOT_ZOOM) + PLOT_TRANSFORM_Y;
 const HEIGHT: usize = (((X_END - X_START) / (Y_END - Y_START)) * WIDTH as f64) as usize;
 
-const N_ITER: u32 = 500;
-const BEGIN_SHADE_AT_N: u32 = 0;
-const NUM_SHADES: u8 = 255;
+const N_ITER: u32 = 255;
+const BEGIN_SHADE_AT_N: u32 = 10;
+const NUM_SHADES: u8 = 5;
 const FIRST_SHADE_VAL_IFN_LIGHT: u8 = 20;   //shades grow upward (0 -> 255)
 const FIRST_SHADE_VAL_IF_LIGHT: u8 = 255;   //shades grow downward (255 -> 0)
 const PATH: &str = "mandelbrot_at_";
