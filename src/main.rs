@@ -38,16 +38,10 @@ const PATH: &str = "mandelbrot_at_";
 //const DELTA_Y: f64 = (Y_END - Y_START) / (WIDTH as f64);
 
 fn init_plot() -> Vec<Vec<u32>> {
-    let mut r: Vec<Vec<u32>> = Vec::new();
+    let mut r: Vec<Vec<u32>> = Vec::with_capacity(HEIGHT);
 
     for _ in 0..HEIGHT {
-        let mut h: Vec<u32> = Vec::new();
-
-        for _ in 0..WIDTH {
-            h.push(0);
-        }
-
-        r.push(h);
+        r.push(vec![0; WIDTH]);
     }
 
     r
@@ -78,75 +72,35 @@ fn point_in_mandelbrot_set(x: f64, y: f64) -> u32 {
         i += 1;
     }
 
-    return i;
+    i
 }
 
-fn insert_mandelbrot(plot: &mut Vec<Vec<u32>>) {
+fn insert_mandelbrot(plot: &mut [Vec<u32>]) {
     //So we loop through the plot. we calculate the
     //point at each plot based on x_start and x_end
     let delta_x = (X_END - X_START) / (HEIGHT as f64);
     let delta_y = (Y_END - Y_START) / (WIDTH as f64);
 
-    /*
-    Started making multithreaded vers because bored
-    //based on the number of threads, divide them into equal sections. We will
-    //just make n columns based on n threads
-    let column_size = plot.len() as u32 / N_THREADS;
-
-    //yes, this does mean one thread will most likely outlast all the others. sux
-    let mut handles = Vec::new();
-
-
-    for i in 0..N_THREADS {
-        let offset = column_size * i;
-        let plot_y_len = plot[0].len();
-
-
-        let handle = thread::spawn(move || {
-            let mut plt: Vec<Vec<u32>> = Vec::new();
-
-            for x in 0..column_size {
-                let mut row: Vec<u32> = Vec::new();
-                for y in 0..plot_y_len {
-                    let point_x = X_START + (DELTA_X * ((x + offset) as f64));
-                    let point_y = X_START + (DELTA_Y * (y as f64));
-                    row.push(point_in_mandelbrot_set(point_x, point_y));
-                }
-                plt.push(row);
-            }
-
-            return (plt, offset);
-        });
-
-        handles.push(handle);
-    }
-
-    for handle in handles {
-        let handle_plot = handle.join().unwrap();
-
-    }
-    */
-
-    for x in 0..plot.len() {
-        for y in 0..plot[x].len() {
+    for (i, row) in plot.iter_mut().enumerate() {
+        for (j, cell) in row.iter_mut().enumerate() {
             //so we get x and y
             //point 0 is -2.0
             //point 1 is -2.0 + delta_x
             //point 2 is -2.0 + delta_x * 2
-            let point_x = X_START + (delta_x * (x as f64));
-            let point_y = Y_START + (delta_y * (y as f64));
+            let point_x = X_START + (delta_x * (i as f64));
+            let point_y = Y_START + (delta_y * (j as f64));
 
-            plot[x][y] = point_in_mandelbrot_set(point_x, point_y);
+            *cell = point_in_mandelbrot_set(point_x, point_y);
             //println!("({}, {})", point_x, point_y);
         }
     }
 }
 
-fn create_image(plot: &Vec<Vec<u32>>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+fn create_image(plot: &[Vec<u32>]) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
     let mut image = RgbaImage::new(WIDTH as u32, HEIGHT as u32);
-    for x in 0..plot.len() {
-        for y in 0..plot[x].len() {
-            let pixel_iteration_count = plot[x][y];
+    for (x, row) in plot.iter().enumerate() {
+        for (y, cell) in row.iter().enumerate() {
+            let pixel_iteration_count = *cell;
             //then we want it to be white
 
             //apply the value in which to start shading
@@ -251,6 +205,7 @@ fn save_image(img: ImageBuffer<Rgba<u8>, Vec<u8>>) {
 fn main() {
     println!("Hello, world!");
     println!("HEIGHT = {}", HEIGHT);
+    println!("WIDTH = {}", WIDTH);
 
     //initialize the plot
     let mut plot = init_plot();
