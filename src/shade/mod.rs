@@ -66,24 +66,16 @@ impl ShadeConfig {
         // subtract from the begin_shade value
         let modified_shade_value = iteration_value.saturating_sub(self.begin_shade_at_n);
 
-        let percent_of_opacity = (modified_shade_value as f64) / self.num_shades() as f64;
+        let percent_of_shade = (modified_shade_value as f64) / self.num_shades() as f64;
 
         match &self.shade {
             ShadingType::Opacity(opacity) => {
-                Rgb::splat(0).with_alpha((opacity.get_opacity(percent_of_opacity) * 255.) as u8)
+                Rgb::splat(0).with_alpha(opacity.get_opacity_u8(percent_of_shade))
             }
-            ShadingType::OpacityColor { .. } => {
-                //
-                todo!();
-                //
-            }
-            ShadingType::Color(_) => {
-                //
-                todo!();
-                //
-            }
-        };
-
-        todo!()
+            ShadingType::OpacityColor { color, opacity } => color
+                .get_color(percent_of_shade)
+                .with_alpha(opacity.get_opacity_u8(percent_of_shade)),
+            ShadingType::Color(color) => color.get_color(percent_of_shade).into_rgba(),
+        }
     }
 }

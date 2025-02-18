@@ -1,26 +1,94 @@
-use image::{ImageBuffer, Rgba, RgbaImage};
+use chrono::Utc;
+use image::{ImageBuffer, Rgba as ImageRgba, RgbaImage};
+use nalgebra::Vector2;
 use rayon::iter::ParallelIterator;
 
 mod shade;
 pub use shade::*;
+mod window;
+pub use window::*;
 mod plot;
 pub use plot::*;
 
-#[allow(dead_code)]
-mod old_main;
+//#[allow(dead_code)]
+//mod old_main;
 
 pub struct Mandelbrot {
     shade: ShadeConfig,
     plot: PlotConfig,
+    window: Window,
 }
+
+impl Default for Mandelbrot {
+    fn default() -> Self {
+        let bottom_left = Vector2::new(-2., -1.2);
+        let top_right = Vector2::new(0.5, 1.2);
+        let image_width = 1920;
+        let shade = ShadeConfig::light_default();
+
+        Self::new_for_scaled_image(top_right, bottom_left, image_width, shade)
+    }
+}
+
 impl Mandelbrot {
-    pub fn new(plot_config: PlotConfig, shade_config: ShadeConfig) -> Self {
+    pub fn sandbox_default() -> Self {
+        let window = Window::new_from_dims(Vector2::new(4., 8.), Vector2::zeros(), 1.0);
+        let plot_config = PlotConfig::new(1920, 1080);
+        let shade = ShadeConfig::light_default();
+
+        Self::new(window, plot_config, shade)
+    }
+
+    /// scales image height proportionally according to the dimensions of the graph
+    pub fn new_for_scaled_image(
+        graph_top_right: Vector2<f64>,
+        graph_bottom_left: Vector2<f64>,
+        image_width: u32,
+        shade_config: ShadeConfig,
+    ) -> Self {
+        let window = Window::new(
+            graph_top_right.y,
+            graph_top_right.x,
+            graph_bottom_left.y,
+            graph_bottom_left.x,
+        );
+
+        let height_per_width =
+            (graph_top_right.y - graph_bottom_left.y) / (graph_top_right.x - graph_bottom_left.x);
+
+        let image_height = image_width as f64 * height_per_width;
+        let plot = PlotConfig::new(image_width, image_height as u32);
+
         Self {
-            plot: plot_config,
+            window,
+            plot,
             shade: shade_config,
         }
     }
-    pub fn point_in_graph(&self, x: f64, y: f64) -> u32 {
+
+    pub fn new(window: Window, plot: PlotConfig, shade_config: ShadeConfig) -> Self {
+        Self {
+            window,
+            plot,
+            shade: shade_config,
+        }
+    }
+
+    pub fn new_windowed(
+        dimensions: Vector2<f64>,
+        transform: Vector2<f64>,
+        zoom: f64,
+        shade_config: ShadeConfig,
+    ) -> Self {
+        Self {
+            window: Window::new_from_dims(dimensions, transform, zoom),
+            plot: PlotConfig::new(dimensions.x as u32, dimensions.y as u32),
+            shade: shade_config,
+        }
+    }
+
+    /// This returns the value of a point in the mandelbrot set. This is irrespective of what the window does.
+    pub const fn point_in_set(&self, x: f64, y: f64) -> u32 {
         let mut zx: f64 = 0.0;
         let mut zy: f64 = 0.0;
 
@@ -34,101 +102,47 @@ impl Mandelbrot {
             //this is pythagoreans theorum without square root because
             //ya know, power intensive
             //(sqrt of (zx^2 + zy^2)) > 2.0
-            if (zx * zx) + (zy * zy) > 4.0 || i > self.shade.n_iter {
+            if (zx * zx) + (zy * zy) > 4.0 || i > self.shade.num_iterations() {
                 break;
             }
             i += 1;
         }
         i
     }
-    pub fn rasterize(&self) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
-        let mut image = RgbaImage::new(self.plot.width, self.plot.height);
+
+    /// translates a point in the plot to a point in the mandelbrot set
+    fn translate_plot_point(&self, x: u32, y: u32) -> (f64, f64) {
+        let (perc_x, perc_y) = self.plot.percent_from_bottom_left(x, y);
+        self.window.get_pixel_from_percent(perc_x, perc_y)
+    }
+
+    /// returns the value of a point in the plot based on the window.
+    pub fn point_in_plot(&self, x: u32, y: u32) -> u32 {
+        let (x, y) = self.translate_plot_point(x, y);
+        self.point_in_set(x, y)
+    }
+
+    pub fn rasterize(&self) -> ImageBuffer<ImageRgba<u8>, Vec<u8>> {
+        let mut image = RgbaImage::new(self.plot.width(), self.plot.height());
         // for (x, row) in plot.iter().enumerate() {
         //     row.par_iter().enumerate().for_each(|(y, cell)| {});
         // }
 
         image.par_enumerate_pixels_mut().for_each(|(x, y, pixel)| {
-            /*
+            let pixel_iteration_count = self.point_in_plot(x, y);
 
+            let color = self.shade.get_color(pixel_iteration_count);
 
-            */
-            let pixel_iteration_count = self.point_in_graph(x as f64, y as f64);
-            //then we want it to be white
-
-            //apply the value in which to start shading
-            let pixel_modified_count: i32 =
-                pixel_iteration_count as i32 - self.shade.begin_shading_at_iteration() as i32;
-
-            let max = 1 + self.shade.num_iterations() - self.shade.begin_shading_at_iteration();
-
-            //note: HEIGHT - x - 1 is to rotate image around the x axis
-            if pixel_modified_count < 0 {
-                *pixel = Rgba([0, 0, 0, 0]);
-            } else {
-                let mut pixel_value = ((pixel_modified_count as f64 / max as f64)
-                    * (FIRST_SHADE_VAL_IF_LIGHT as f64))
-                    as u8;
-                /*if pixel_value == 0 {
-                    println!("------------------------------------------------");
-                    println!("pixel value:              {}", pixel_value);
-                    println!("pixel_iteration_count:    {}", pixel_iteration_count);
-                    println!("BEGIN_SHADE_AT_N:         {}", BEGIN_SHADE_AT_N);
-                    println!("pixel_modified_count:     {}", pixel_modified_count);
-                    println!("max:                      {}", max);
-                    println!("FIRST_SHADE_VAL_IF_LIGHT: {}", FIRST_SHADE_VAL_IF_LIGHT);
-
-                }*/
-
-                let opacity = pixel_value;
-
-                if !LIGHT {
-                    pixel_value = FIRST_SHADE_VAL_IFN_LIGHT
-                        + ((pixel_modified_count as f64 / max as f64)
-                            * (255.0 - FIRST_SHADE_VAL_IFN_LIGHT as f64))
-                            as u8;
-                    pixel_value = 255 - pixel_value;
-                }
-
-                //calculate the number of values in a shade
-                let values_in_shade = 255 / NUM_SHADES;
-
-                //run modulo of the pixel value, and subtract that from the pixel
-                pixel_value = pixel_value - (pixel_value % values_in_shade);
-
-                match SHADING_TYPE {
-                    ShadeConfig::ColorOnly => {
-                        *pixel = Rgba([pixel_value, pixel_value, pixel_value, 255]);
-                    }
-                    ShadeConfig::OpacityOnly => {
-                        if LIGHT {
-                            *pixel = Rgba([255, 255, 255, opacity]);
-                        } else {
-                            *pixel = Rgba([0, 0, 0, opacity]);
-                        }
-                    }
-                    ShadeConfig::OpacityAndColor => {
-                        *pixel = Rgba([pixel_value, pixel_value, pixel_value, opacity]);
-                    }
-                }
-                //image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, opacity]));
-                //image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, opacity]));
-            }
-            /*
-
-                So now we need to calculate the pixel value given that there is a starting pixel value
-                let's say that the iteration count is 10
-                for a total iteration of 13
-                and the starting pixel value is 85
-                of course, the highest value of a pixel is 255
-
-                so the equation will be
-                85 + ((255-85) * 10/13)
-
-
-
-            */
+            *pixel = ImageRgba([color.r, color.g, color.b, color.a]);
         });
 
         image
+    }
+
+    pub fn save(&self) {
+        let image = self.rasterize();
+        let now = Utc::now();
+        let path = format!("mandelbrot_{}.png", now.format("%y-%m-%d-%H%M%S"));
+        image.save(&path).unwrap();
     }
 }

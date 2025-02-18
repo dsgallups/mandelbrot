@@ -76,4 +76,9 @@ impl OpacityConfig {
             self.max - range_percent
         }
     }
+
+    /// returns a value between 0-255
+    pub const fn get_opacity_u8(&self, percent_of_opacity: f64) -> u8 {
+        (self.get_opacity(percent_of_opacity) * 255.) as u8
+    }
 }

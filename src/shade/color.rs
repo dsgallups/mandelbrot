@@ -1,3 +1,5 @@
+use std::ops::Mul;
+
 pub struct Rgba {
     pub r: u8,
     pub g: u8,
@@ -18,6 +20,15 @@ pub struct Rgb {
 }
 
 impl Rgb {
+    pub const fn red() -> Self {
+        Self::new(255, 0, 0)
+    }
+    pub const fn green() -> Self {
+        Self::new(0, 255, 0)
+    }
+    pub const fn blue() -> Self {
+        Self::new(0, 0, 255)
+    }
     pub const fn new(r: u8, g: u8, b: u8) -> Self {
         Self { r, g, b }
     }
@@ -29,5 +40,21 @@ impl Rgb {
     }
     pub const fn into_rgba(self) -> Rgba {
         Rgba::new(self.r, self.g, self.b, 255)
+    }
+    pub const fn const_mul(&self, rhs: f64) -> Rgb {
+        let r = ((self.r as f64) * rhs) as u8;
+        let g = ((self.g as f64) * rhs) as u8;
+        let b = ((self.g as f64) * rhs) as u8;
+        Rgb::new(r, g, b)
+    }
+}
+
+impl Mul<f64> for Rgb {
+    type Output = Rgb;
+    fn mul(self, rhs: f64) -> Rgb {
+        let r = ((self.r as f64) * rhs) as u8;
+        let g = ((self.g as f64) * rhs) as u8;
+        let b = ((self.g as f64) * rhs) as u8;
+        Rgb::new(r, g, b)
     }
 }
