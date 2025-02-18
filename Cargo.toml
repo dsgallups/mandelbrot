@@ -13,6 +13,8 @@ image = "0.25"
 chrono = "0.4"
 rayon = "1.10.0"
 nalgebra = "0.33.2"
+rug = "1.27.0"
+minifb = "0.28.0"
 
 [profile.release]
 strip = true
