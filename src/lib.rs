@@ -1,10 +1,10 @@
 mod shade;
 pub use shade::*;
-mod window;
-pub use window::*;
 mod plot;
 pub use plot::*;
 mod mandelbrot;
 pub use mandelbrot::*;
 mod rasters;
 pub use rasters::*;
+mod window;
+pub use window::*;

@@ -1,13 +1,13 @@
 use nalgebra::Vector2;
 
-pub struct Window {
+pub struct Plot {
     left: f64,
     right: f64,
     top: f64,
     bottom: f64,
 }
 
-impl Window {
+impl Plot {
     /// Maps a window width and height, transform, and zoom into a window.
     ///
     /// X is to the right.
@@ -17,10 +17,12 @@ impl Window {
     ///
     /// Zoom is applied after the transform.
     pub fn new_from_dims(dimensions: Vector2<f64>, transform: Vector2<f64>, zoom: f64) -> Self {
-        let initial_left = transform.x - (dimensions.x / 2.);
-        let initial_right = transform.x + (dimensions.x / 2.);
-        let initial_top = transform.y + (dimensions.y / 2.);
-        let initial_bottom = transform.y - (dimensions.y / 2.);
+        let width = dimensions.x;
+        let height = dimensions.y;
+        let initial_left = transform.x - (width / 2.);
+        let initial_right = transform.x + (width / 2.);
+        let initial_top = transform.y + (height / 2.);
+        let initial_bottom = transform.y - (height / 2.);
 
         Self {
             left: initial_left * zoom,
