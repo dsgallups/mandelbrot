@@ -1,5 +1,6 @@
 use std::ops::Mul;
 
+#[derive(Clone)]
 pub struct Rgba {
     pub r: u8,
     pub g: u8,
@@ -7,7 +8,16 @@ pub struct Rgba {
     /// 0-255 where 255 is max alpha
     pub a: u8,
 }
+
 impl Rgba {
+    pub const fn transparent() -> Self {
+        Self {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 0,
+        }
+    }
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self { r, g, b, a }
     }

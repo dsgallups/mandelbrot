@@ -6,3 +6,5 @@ mod plot;
 pub use plot::*;
 mod mandelbrot;
 pub use mandelbrot::*;
+mod rasters;
+pub use rasters::*;

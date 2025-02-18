@@ -1,9 +1,6 @@
-use chrono::Utc;
-use image::{ImageBuffer, Rgba as ImageRgba, RgbaImage};
 use nalgebra::Vector2;
-use rayon::iter::ParallelIterator;
 
-use crate::{PlotConfig, ShadeConfig, Window};
+use crate::{MBrotRaster, PlotConfig, ShadeConfig, Window};
 
 pub struct Mandelbrot {
     shade: ShadeConfig,
@@ -161,30 +158,23 @@ impl Mandelbrot {
         self.point_in_set(x, y)
     }
 
-    pub fn rasterize(&self) -> ImageBuffer<ImageRgba<u8>, Vec<u8>> {
+    pub fn rasterize<R: MBrotRaster>(&self) -> R {
         let height = self.plot.height();
-        let mut image = RgbaImage::new(self.plot.width(), height);
-        // for (x, row) in plot.iter().enumerate() {
-        //     row.par_iter().enumerate().for_each(|(y, cell)| {});
-        // }
+        let mut raster = R::init_raster(self.plot.width(), height);
 
-        image.par_enumerate_pixels_mut().for_each(|(x, y, pixel)| {
-            //image grows y downwards
-            let pixel_iteration_count = self.point_in_plot(x, height - y);
+        let get_point_in_plot = |x, y| {
+            let pixel_iteration_count = self.point_in_plot(x, y);
+            self.shade.get_color(pixel_iteration_count)
+        };
 
-            let color = self.shade.get_color(pixel_iteration_count);
+        raster.draw_mandelbrot(get_point_in_plot);
 
-            *pixel = ImageRgba([color.r, color.g, color.b, color.a]);
-        });
-
-        image
+        raster
     }
 
-    pub fn save(&self) {
-        let image = self.rasterize();
-        let now = Utc::now();
-        let path = format!("mandelbrot_{}.png", now.format("%y-%m-%d-%H%M%S"));
-        image.save(&path).unwrap();
+    pub fn save<R: MBrotRaster>(&self) {
+        let raster: R = self.rasterize();
+        raster.save_mandelbrot();
     }
 }
 
