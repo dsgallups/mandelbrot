@@ -32,6 +32,7 @@ impl MandelbrotWindow {
 
         let plot = Plot::new_from_dims(plot_dims, Vector2::zeros(), 1.0);
 
+        //let plot = Plot::new(1., 0.5, -1., -2.);
         Self {
             window_width,
             window_height,
@@ -50,6 +51,8 @@ impl MandelbrotWindow {
         let height = self.window_height;
         let width = self.window_width;
 
+        println!("render called!");
+
         window_buf
             .par_iter_mut()
             .enumerate()
@@ -57,8 +60,12 @@ impl MandelbrotWindow {
                 let x = i % width;
                 let y = i / height;
                 let (perc_x, perc_y) = self.percent_from_bottom_left(x, y);
-                let pix = mandelbrot.get_point_color(perc_x, perc_y);
+                let (plot_x, plot_y) = self.plot.get_pixel_from_percent(perc_x, perc_y);
+                let pix = mandelbrot.get_point_color(plot_x, plot_y);
+                //println!("pix: {}", pix.into_rgb_byte());
+                //*rgb_byte = 0x00FFFFFF;
                 *rgb_byte = pix.into_rgb_byte();
             });
+        println!("render complete");
     }
 }

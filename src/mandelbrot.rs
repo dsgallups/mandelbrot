@@ -128,7 +128,7 @@ impl Mandelbrot {
 
         match &self.shade {
             ShadingType::Opacity(opacity) => {
-                Rgb::splat(0).with_alpha(opacity.get_opacity_u8(percent_of_shade))
+                Rgb::splat(255).with_alpha(opacity.get_opacity_u8(percent_of_shade))
             }
             ShadingType::OpacityColor { color, opacity } => color
                 .get_color(percent_of_shade)

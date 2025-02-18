@@ -22,7 +22,7 @@ impl App {
         .unwrap();
 
         // a 32 bit color
-        let window_buf: Vec<u32> = vec![0; window_width * window_height];
+        let window_buf: Vec<u32> = vec![0x00FFFFFF; window_width * window_height];
 
         Self {
             client,
