@@ -44,6 +44,8 @@ impl App {
                     self.mandelbrot_window.window_height,
                 )
                 .unwrap();
+
+            self.mandelbrot_window.zoom(1. / 1.01);
         }
     }
 }

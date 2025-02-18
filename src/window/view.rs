@@ -40,6 +40,12 @@ impl Plot {
             left,
         }
     }
+    pub fn zoom(&mut self, amt: f64) {
+        self.left *= amt;
+        self.right *= amt;
+        self.top *= amt;
+        self.bottom *= amt;
+    }
 
     /// Returns the pixel based on the provided percentage values from the bottom left
     pub fn get_pixel_from_percent(&self, perc_x: f64, perc_y: f64) -> (f64, f64) {

@@ -21,4 +21,7 @@ impl ShadingType {
     pub const fn opacity(opacity_config: OpacityConfig) -> Self {
         Self::Opacity(opacity_config)
     }
+    pub const fn color(color_config: ColorConfig) -> Self {
+        Self::Color(color_config)
+    }
 }

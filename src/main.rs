@@ -4,9 +4,9 @@ use nalgebra::Vector2;
 fn main() {
     println!("mandelbrot set gen");
 
-    let window_width = 1920;
-    let window_height = 1080;
-    let mandelbrot = Mandelbrot::light_default();
+    let window_width = 640;
+    let window_height = 480;
+    let mandelbrot = Mandelbrot::red_opacity();
     let window = App::new(window_width, window_height, mandelbrot);
 
     window.run();

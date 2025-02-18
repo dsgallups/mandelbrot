@@ -15,7 +15,7 @@ Really all the mandelbrot needs is its shade values.
 it should NOT care about what the window's translation is.
 "#]
 
-use crate::{OpacityConfig, Rgb, Rgba, ShadingType};
+use crate::{ColorConfig, OpacityConfig, Rgb, Rgba, ShadingType};
 /// Defines a graph that is used to determine the pixel color of a point in the set
 pub struct Mandelbrot {
     shade: ShadingType,
@@ -49,6 +49,25 @@ impl Mandelbrot {
     pub fn dark_opacity(min_opacity: f64, max_opacity: f64) -> Self {
         Self {
             shade: ShadingType::dark_opacity(min_opacity, max_opacity),
+            num_iterations: Self::DEFAULT_ITER,
+            begin_shade_at_n: Self::DEFALT_BEGIN_SHADE,
+        }
+    }
+
+    pub const fn red() -> Self {
+        Self {
+            shade: ShadingType::color(ColorConfig::red(true)),
+            num_iterations: Self::DEFAULT_ITER,
+            begin_shade_at_n: Self::DEFALT_BEGIN_SHADE,
+        }
+    }
+
+    pub const fn red_opacity() -> Self {
+        Self {
+            shade: ShadingType::OpacityColor {
+                color: ColorConfig::red(true),
+                opacity: OpacityConfig::light_default(),
+            },
             num_iterations: Self::DEFAULT_ITER,
             begin_shade_at_n: Self::DEFALT_BEGIN_SHADE,
         }
