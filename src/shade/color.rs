@@ -21,6 +21,15 @@ impl Rgba {
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self { r, g, b, a }
     }
+    pub fn into_rgb_byte(self) -> u32 {
+        // Scale each channel by alpha (integer math)
+        let r_scaled = (self.r as u16 * self.a as u16) / 255;
+        let g_scaled = (self.g as u16 * self.a as u16) / 255;
+        let b_scaled = (self.b as u16 * self.a as u16) / 255;
+
+        // Put them into 0x00RRGGBB
+        ((r_scaled as u32) << 16) | ((g_scaled as u32) << 8) | (b_scaled as u32)
+    }
 }
 
 pub struct Rgb {
