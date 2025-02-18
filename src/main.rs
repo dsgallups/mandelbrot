@@ -1,5 +1,6 @@
 use chrono::Utc;
 use image::{ImageBuffer, Rgba, RgbaImage};
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 //use std::thread;
 //use std::sync::{Mutex, Arc};
 
@@ -81,8 +82,8 @@ fn insert_mandelbrot(plot: &mut [Vec<u32>]) {
     let delta_x = (X_END - X_START) / (HEIGHT as f64);
     let delta_y = (Y_END - Y_START) / (WIDTH as f64);
 
-    for (i, row) in plot.iter_mut().enumerate() {
-        for (j, cell) in row.iter_mut().enumerate() {
+    plot.par_iter_mut().enumerate().for_each(|(i, row)| {
+        row.par_iter_mut().enumerate().for_each(|(j, cell)| {
             //so we get x and y
             //point 0 is -2.0
             //point 1 is -2.0 + delta_x
@@ -91,103 +92,95 @@ fn insert_mandelbrot(plot: &mut [Vec<u32>]) {
             let point_y = Y_START + (delta_y * (j as f64));
 
             *cell = point_in_mandelbrot_set(point_x, point_y);
-            //println!("({}, {})", point_x, point_y);
-        }
-    }
+        });
+    })
 }
 
 fn create_image(plot: &[Vec<u32>]) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
     let mut image = RgbaImage::new(WIDTH as u32, HEIGHT as u32);
-    for (x, row) in plot.iter().enumerate() {
-        for (y, cell) in row.iter().enumerate() {
-            let pixel_iteration_count = *cell;
-            //then we want it to be white
+    // for (x, row) in plot.iter().enumerate() {
+    //     row.par_iter().enumerate().for_each(|(y, cell)| {});
+    // }
 
-            //apply the value in which to start shading
-            let pixel_modified_count: i32 = pixel_iteration_count as i32 - BEGIN_SHADE_AT_N as i32;
+    image.par_enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+        /*
 
-            let max = 1 + N_ITER - BEGIN_SHADE_AT_N;
 
-            //note: HEIGHT - x - 1 is to rotate image around the x axis
-            if pixel_modified_count < 0 {
-                image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, 0]))
-            } else {
-                let mut pixel_value = ((pixel_modified_count as f64 / max as f64)
-                    * (FIRST_SHADE_VAL_IF_LIGHT as f64))
-                    as u8;
-                /*if pixel_value == 0 {
-                    println!("------------------------------------------------");
-                    println!("pixel value:              {}", pixel_value);
-                    println!("pixel_iteration_count:    {}", pixel_iteration_count);
-                    println!("BEGIN_SHADE_AT_N:         {}", BEGIN_SHADE_AT_N);
-                    println!("pixel_modified_count:     {}", pixel_modified_count);
-                    println!("max:                      {}", max);
-                    println!("FIRST_SHADE_VAL_IF_LIGHT: {}", FIRST_SHADE_VAL_IF_LIGHT);
+        */
+        let cell = plot[y as usize][x as usize];
+        let pixel_iteration_count = cell;
+        //then we want it to be white
 
-                }*/
+        //apply the value in which to start shading
+        let pixel_modified_count: i32 = pixel_iteration_count as i32 - BEGIN_SHADE_AT_N as i32;
 
-                let opacity = pixel_value;
+        let max = 1 + N_ITER - BEGIN_SHADE_AT_N;
 
-                if !LIGHT {
-                    pixel_value = FIRST_SHADE_VAL_IFN_LIGHT
-                        + ((pixel_modified_count as f64 / max as f64)
-                            * (255.0 - FIRST_SHADE_VAL_IFN_LIGHT as f64))
-                            as u8;
-                    pixel_value = 255 - pixel_value;
-                }
+        //note: HEIGHT - x - 1 is to rotate image around the x axis
+        if pixel_modified_count < 0 {
+            *pixel = Rgba([0, 0, 0, 0]);
+        } else {
+            let mut pixel_value = ((pixel_modified_count as f64 / max as f64)
+                * (FIRST_SHADE_VAL_IF_LIGHT as f64)) as u8;
+            /*if pixel_value == 0 {
+                println!("------------------------------------------------");
+                println!("pixel value:              {}", pixel_value);
+                println!("pixel_iteration_count:    {}", pixel_iteration_count);
+                println!("BEGIN_SHADE_AT_N:         {}", BEGIN_SHADE_AT_N);
+                println!("pixel_modified_count:     {}", pixel_modified_count);
+                println!("max:                      {}", max);
+                println!("FIRST_SHADE_VAL_IF_LIGHT: {}", FIRST_SHADE_VAL_IF_LIGHT);
 
-                //calculate the number of values in a shade
-                let values_in_shade = 255 / NUM_SHADES;
+            }*/
 
-                //run modulo of the pixel value, and subtract that from the pixel
-                pixel_value = pixel_value - (pixel_value % values_in_shade);
+            let opacity = pixel_value;
 
-                match SHADING_TYPE {
-                    ShadingType::ColorOnly => image.put_pixel(
-                        y as u32,
-                        HEIGHT as u32 - x as u32 - 1,
-                        Rgba([pixel_value, pixel_value, pixel_value, 255]),
-                    ),
-                    ShadingType::OpacityOnly => {
-                        if LIGHT {
-                            image.put_pixel(
-                                y as u32,
-                                HEIGHT as u32 - x as u32 - 1,
-                                Rgba([255, 255, 255, opacity]),
-                            )
-                        } else {
-                            image.put_pixel(
-                                y as u32,
-                                HEIGHT as u32 - x as u32 - 1,
-                                Rgba([0, 0, 0, opacity]),
-                            )
-                        }
-                    }
-                    ShadingType::OpacityAndColor => image.put_pixel(
-                        y as u32,
-                        HEIGHT as u32 - x as u32 - 1,
-                        Rgba([pixel_value, pixel_value, pixel_value, opacity]),
-                    ),
-                }
-                //image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, opacity]));
-                //image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, opacity]));
+            if !LIGHT {
+                pixel_value = FIRST_SHADE_VAL_IFN_LIGHT
+                    + ((pixel_modified_count as f64 / max as f64)
+                        * (255.0 - FIRST_SHADE_VAL_IFN_LIGHT as f64)) as u8;
+                pixel_value = 255 - pixel_value;
             }
-            /*
 
-                So now we need to calculate the pixel value given that there is a starting pixel value
-                let's say that the iteration count is 10
-                for a total iteration of 13
-                and the starting pixel value is 85
-                of course, the highest value of a pixel is 255
+            //calculate the number of values in a shade
+            let values_in_shade = 255 / NUM_SHADES;
 
-                so the equation will be
-                85 + ((255-85) * 10/13)
+            //run modulo of the pixel value, and subtract that from the pixel
+            pixel_value = pixel_value - (pixel_value % values_in_shade);
 
-
-
-            */
+            match SHADING_TYPE {
+                ShadingType::ColorOnly => {
+                    *pixel = Rgba([pixel_value, pixel_value, pixel_value, 255]);
+                }
+                ShadingType::OpacityOnly => {
+                    if LIGHT {
+                        *pixel = Rgba([255, 255, 255, opacity]);
+                    } else {
+                        *pixel = Rgba([0, 0, 0, opacity]);
+                    }
+                }
+                ShadingType::OpacityAndColor => {
+                    *pixel = Rgba([pixel_value, pixel_value, pixel_value, opacity]);
+                }
+            }
+            //image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([pixel_value, pixel_value, pixel_value, opacity]));
+            //image.put_pixel(y as u32, HEIGHT as u32 - x as u32 - 1, Rgba([0, 0, 0, opacity]));
         }
-    }
+        /*
+
+            So now we need to calculate the pixel value given that there is a starting pixel value
+            let's say that the iteration count is 10
+            for a total iteration of 13
+            and the starting pixel value is 85
+            of course, the highest value of a pixel is 255
+
+            so the equation will be
+            85 + ((255-85) * 10/13)
+
+
+
+        */
+    });
 
     image
 }
