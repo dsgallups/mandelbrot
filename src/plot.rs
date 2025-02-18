@@ -20,13 +20,12 @@ impl PlotConfig {
         diff as f64 / self.width as f64
     }
 
+    /// y increases upwards
     pub fn percent_from_bottom_left(&self, x: u32, y: u32) -> (f64, f64) {
-        let diff_x = self.width - x;
-        let perc_x = diff_x as f64 / self.width as f64;
+        //let diff_x = self.width - x;
+        let perc_x = x as f64 / self.width as f64;
 
-        let diff_y = self.height - y;
-
-        let perc_y = diff_y as f64 / self.height as f64;
+        let perc_y = y as f64 / self.height as f64;
 
         (perc_x, perc_y)
     }
