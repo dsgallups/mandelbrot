@@ -43,6 +43,11 @@ impl MandelbrotWindow {
         self.plot.zoom(amt);
     }
 
+    pub fn translate(&mut self, x_amt: f64, y_amt: f64) {
+        self.plot.translate_x(x_amt);
+        self.plot.translate_y(y_amt);
+    }
+
     fn percent_from_bottom_left(&self, x: usize, y: usize) -> (f64, f64) {
         //let diff_x = self.width - x;
         let perc_x = x as f64 / self.window_width as f64;

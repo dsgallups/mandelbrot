@@ -40,6 +40,16 @@ impl Plot {
             left,
         }
     }
+
+    pub fn translate_x(&mut self, amt: f64) {
+        self.left += amt;
+        self.right += amt;
+    }
+    pub fn translate_y(&mut self, amt: f64) {
+        self.top += amt;
+        self.bottom += amt;
+    }
+
     pub fn zoom(&mut self, amt: f64) {
         self.left *= amt;
         self.right *= amt;

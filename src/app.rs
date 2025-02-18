@@ -11,7 +11,9 @@ pub struct App {
 
 impl App {
     pub fn new(window_width: usize, window_height: usize, mandelbrot: Mandelbrot) -> Self {
-        let mb_window = MandelbrotWindow::new(window_width, window_height);
+        let mut mb_window = MandelbrotWindow::new(window_width, window_height);
+
+        mb_window.translate(-1., 0.);
 
         let client = ClientWindow::new(
             "Mandelbrot",
