@@ -12,9 +12,9 @@ mod view;
 pub use view::*;
 
 pub struct MandelbrotWindow {
-    pub window_width: usize,
-    pub window_height: usize,
-    plot: Plot,
+    translation: Complex,
+    zoom: Float,
+    precision: u32,
 }
 
 impl MandelbrotWindow {
@@ -23,29 +23,26 @@ impl MandelbrotWindow {
     where the plot value of 2.0 is touching the left.
     Centered at zero
     */
-    pub fn new(window_width: usize, window_height: usize) -> Self {
-        let plot_width = 2.;
-        let height_per_width = window_height as f64 / window_width as f64;
-        let plot_height = height_per_width * plot_width;
-
-        let plot_dims = Vector2::new(plot_width, plot_height);
-
-        let plot = Plot::new_from_dims(plot_dims, Vector2::zeros(), 1.0);
-
+    #[allow(clippy::new_without_default)]
+    pub fn new(precision: u32) -> Self {
         Self {
-            window_width,
-            window_height,
-            plot,
+            translation: Complex::new(precision),
+            zoom: Float::new(precision),
+            precision,
         }
     }
 
     pub fn zoom(&mut self, amt: f64) {
-        self.plot.zoom(amt);
+        self.zoom *= Float::with_val(self.precision, amt);
     }
 
+    // translates by an amount relative to the current zoom
     pub fn translate(&mut self, x_amt: f64, y_amt: f64) {
-        self.plot.translate_x(x_amt);
-        self.plot.translate_y(y_amt);
+        let amount = Complex::with_val(self.precision, (x_amt, y_amt));
+        //multiply by the zoom
+        let as_zoomed = &amount * &self.zoom;
+
+        self.translation += Complex::with_val(self.precision, as_zoomed);
     }
 
     fn percent_from_bottom_left(&self, x: usize, y: usize) -> (f64, f64) {
@@ -55,16 +52,19 @@ impl MandelbrotWindow {
 
         (perc_x, perc_y)
     }
-    pub fn render(&mut self, window_buf: &mut Vec<u32>, mandelbrot: &Mandelbrot) {
-        let height = self.window_height;
-        let width = self.window_width;
-
+    pub fn render(
+        &mut self,
+        window_buf: &mut Vec<u32>,
+        window_width: usize,
+        window_height: usize,
+        mandelbrot: &Mandelbrot,
+    ) {
         window_buf
             .par_iter_mut()
             .enumerate()
             .for_each(|(i, rgb_byte)| {
-                let x = i % width;
-                let y = i / height;
+                let x = i % window_width;
+                let y = i / window_height;
                 let (perc_x, perc_y) = self.percent_from_bottom_left(x, y);
                 let (plot_x, plot_y) = self.plot.get_pixel_from_percent(perc_x, perc_y);
                 let pix = mandelbrot.get_point_color(plot_x, plot_y);

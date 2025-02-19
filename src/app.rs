@@ -5,13 +5,15 @@ use crate::{Mandelbrot, MandelbrotWindow};
 pub struct App {
     client: ClientWindow,
     mandelbrot_window: MandelbrotWindow,
+    window_width: usize,
+    widow_height: usize,
     window_buf: Vec<u32>,
     mandelbrot: Mandelbrot,
 }
 
 impl App {
     pub fn new(window_width: usize, window_height: usize, mandelbrot: Mandelbrot) -> Self {
-        let mut mb_window = MandelbrotWindow::new(window_width, window_height);
+        let mut mb_window = MandelbrotWindow::new();
 
         mb_window.translate(-1., 0.);
 

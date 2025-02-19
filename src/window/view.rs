@@ -1,60 +1,46 @@
 use nalgebra::Vector2;
+use rug::{Complex, Float};
 
 pub struct Plot {
-    left: f64,
-    right: f64,
-    top: f64,
-    bottom: f64,
+    bottom_left: Complex,
+    dimensions: Complex,
 }
 
 impl Plot {
-    /// Maps a window width and height, transform, and zoom into a window.
-    ///
-    /// X is to the right.
-    /// Y is up.
-    ///
-    /// Transform assumes middle of the window
-    ///
-    /// Zoom is applied after the transform.
-    pub fn new_from_dims(dimensions: Vector2<f64>, transform: Vector2<f64>, zoom: f64) -> Self {
-        let width = dimensions.x;
-        let height = dimensions.y;
-        let initial_left = transform.x - (width / 2.);
-        let initial_right = transform.x + (width / 2.);
-        let initial_top = transform.y + (height / 2.);
-        let initial_bottom = transform.y - (height / 2.);
+    pub fn new_for_window(
+        window_width: usize,
+        window_height: usize,
+        translation: &Complex,
+        zoom: &Float,
+        precision: u32,
+    ) -> Self {
+        /*
+            so the bottom left is calculated by first
+
+            getting the value of the center.
+
+
+            so let's get the width.
+
+            we will say that the width is
+            the zoom times the window width,
+            and the height is
+            the zoom times the window height.
+
+        */
+        let dimensions = Complex::with_val(precision, (window_width, window_height));
+        let half = Float::with_val(precision, 0.5);
+
+        let plot_dimensions = Complex::with_val(precision, &dimensions * zoom);
+
+        let half_dims = Complex::with_val(precision, &plot_dimensions * &half);
+
+        let bottom_left = translation - &half_dims;
 
         Self {
-            left: initial_left * zoom,
-            right: initial_right * zoom,
-            top: initial_top * zoom,
-            bottom: initial_bottom * zoom,
+            bottom_left: Complex::with_val(precision, bottom_left),
+            dimensions: plot_dimensions,
         }
-    }
-
-    pub const fn new(top: f64, right: f64, bottom: f64, left: f64) -> Self {
-        Self {
-            top,
-            right,
-            bottom,
-            left,
-        }
-    }
-
-    pub fn translate_x(&mut self, amt: f64) {
-        self.left += amt;
-        self.right += amt;
-    }
-    pub fn translate_y(&mut self, amt: f64) {
-        self.top += amt;
-        self.bottom += amt;
-    }
-
-    pub fn zoom(&mut self, amt: f64) {
-        self.left *= amt;
-        self.right *= amt;
-        self.top *= amt;
-        self.bottom *= amt;
     }
 
     /// Returns the pixel based on the provided percentage values from the bottom left
